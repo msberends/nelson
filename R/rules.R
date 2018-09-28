@@ -23,6 +23,7 @@
 #' @param m mean
 #' @param s standard deviation
 #' @param min.run minimal amount of sequential values before rule is triggered (defaults to Nelson's)
+#' @param direction.mean a logical to indicate whether \emph{n} observations in a row must be tested for alternating in direction of the mean
 #' @section Rules list:
 #'   \tabular{lccccc}{
 #'     \emph{Nelson (N), Westgard (W), AIAG (A), Montgomery (M), Healthcare (H):}             \tab  N \tab  W \tab  A \tab  M \tab  H\cr
@@ -36,9 +37,10 @@
 #'     \strong{#7} >= \emph{n} points in a row are within 1 sd of the mean                    \tab 15 \tab  - \tab 15 \tab 15 \tab 15\cr
 #'     \strong{#8} >= \emph{n} points in a row outside 1 sd of the mean, in both directions   \tab  8 \tab  - \tab  8 \tab  8 \tab -
 #'   }
-#' @source \url{https://www.qimacros.com/control-chart/nelson-juran-rules.jpg} \cr
-#'         \url{https://en.wikipedia.org/wiki/Nelson_rules}
+#' @source Nelson LS. \strong{The Shewhart Control Chart—Tests for Special Causes}. Journal of Quality Technology [Internet]. Informa UK Limited; 1984 Oct;16(4):237–9. Available from: \url{http://dx.doi.org/10.1080/00224065.1984.11978921}
 #' @keywords nelson rule qc qcc
+#' @name rules
+#' @aliases rule nelson
 #' @rdname rules
 #' @export
 rule1 <- function(x, m = mean(x), s = sd(x)) {
@@ -48,6 +50,9 @@ rule1 <- function(x, m = mean(x), s = sd(x)) {
 #' @rdname rules
 #' @export
 rule2 <- function(x, m = mean(x), min.run = 9) {
+  if (length(x) < min.run) {
+    return(integer(0))
+  }
   n <- length(x)
   counts <- sign(x - m)
   result <- counts
@@ -59,19 +64,25 @@ rule2 <- function(x, m = mean(x), min.run = 9) {
 #' @rdname rules
 #' @export
 rule3 <- function(x, min.run = 6) {
-  # Between 6 observations you have 5 instances of increasing or decreasing. Therefore min.run - 1.
+  if (length(x) < min.run) {
+    return(integer(0))
+  }
   n <- length(x)
   signs <- sign(c(x[-1], x[n]) - x)
   counts <- signs
   for (rl in 2:(min.run - 1)) {
     counts <- counts + c(signs[rl:n], rep(0, rl - 1))
   }
+  # Between 6 observations you have 5 instances of increasing or decreasing. Therefore min.run - 1.
   which(abs(counts) >= min.run - 1)
 }
 
 #' @rdname rules
 #' @export
 rule4 <- function(x, m = mean(x), min.run = 14, direction.mean = FALSE) {
+  if (length(x) < min.run) {
+    return(integer(0))
+  }
   n <- length(x)
   if (direction.mean == TRUE) {
     signs <- sign(x - m)
@@ -91,6 +102,9 @@ rule4 <- function(x, m = mean(x), min.run = 14, direction.mean = FALSE) {
 #' @rdname rules
 #' @export
 rule5 <- function(x, m = mean(x), s = sd(x), min.run = 3) {
+  if (length(x) < min.run) {
+    return(integer(0))
+  }
   n <- length(x)
   pos <- 1 * ((x - m) / s > 2)
   neg <- 1 * ((x - m) / s < -2)
@@ -107,6 +121,9 @@ rule5 <- function(x, m = mean(x), s = sd(x), min.run = 3) {
 #' @rdname rules
 #' @export
 rule6 <- function(x, m = mean(x), s = sd(x), min.run = 5) {
+  if (length(x) < min.run) {
+    return(integer(0))
+  }
   n <- length(x)
   pos <- 1 * ((x - m) / s > 1)
   neg <- 1 * ((x - m) / s < -1)
@@ -123,6 +140,9 @@ rule6 <- function(x, m = mean(x), s = sd(x), min.run = 5) {
 #' @rdname rules
 #' @export
 rule7 <- function(x, m = mean(x), s = sd(x), min.run = 15) {
+  if (length(x) < min.run) {
+    return(integer(0))
+  }
   n <- length(x)
   within <- 1 * (abs((x - m) / s) < 1)
   counts <- within
@@ -134,10 +154,43 @@ rule7 <- function(x, m = mean(x), s = sd(x), min.run = 15) {
 #' @rdname rules
 #' @export
 rule8 <- function(x, m = mean(x), s = sd(x), min.run = 8) {
+  if (length(x) < min.run) {
+    return(integer(0))
+  }
   n <- length(x)
   outofrange <- 1 * (abs((x - m) / s) > 1)
   counts <- outofrange
   for (rl in 2:min.run)
     counts <- counts + c(outofrange[rl:n], rep(0, rl - 1))
   which(counts >= min.run)
+}
+
+nelson.text <- function(rule, min.run) {
+  if (rule == 1) {
+    tekst <- 'Detect more than 3 standard deviations from the mean'
+  }
+  if (rule == 2) {
+    tekst <- 'Detect {n} observations on same side of the mean'
+  }
+  if (rule == 3) {
+    tekst <- 'Detecteer strikte toename of afname bij >= {n} waarnemingen op een rij'
+  }
+  if (rule == 4) {
+    tekst <- 'Detecteer {n} waarnemingen op een rij alternerend in richting van het gemiddelde, of alternerend in toename en afname'
+  }
+  if (rule == 5) {
+    tekst <- 'Detecteer {n-1} van de {n} >2 sd van gemiddelde in dezelfde richting'
+  }
+  if (rule == 6) {
+    tekst <- 'Detecteer {n-1} van de {n} >1 sd van gemiddelde in dezelfde richting'
+  }
+  if (rule == 7) {
+    tekst <- 'Detecteer >= {n} waarnemingen op een rij binnen 1 sd van het gemiddelde'
+  }
+  if (rule == 8) {
+    tekst <- 'Detecteer >= {n} waarnemingen op een rij allen buiten 1sd'
+  }
+  tekst <- gsub('{n-1}', min.run - 1, tekst, fixed = TRUE)
+  tekst <- gsub('{n}', min.run, tekst, fixed = TRUE)
+  tekst
 }

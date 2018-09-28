@@ -1,0 +1,33 @@
+Package: nelson
+Version: 0.1.0
+Date: 2018-09-27
+Title: Nelson Rules For Quality Control
+Authors@R: c(
+    person(
+        given = c("Matthijs", "S."),
+        family = "Berends",
+        email = "m.berends@certe.nl",
+        role = c("aut", "cre"),
+        comment = c(ORCID = "0000-0001-7620-1800")),
+    person(
+        given = c("Bart", "C."),
+        family = "Meijer",
+        email = "b.meijer@certe.nl",
+        role = c("aut", "rev")))
+Description: Quality Control rules according to Nelson to Leclercq (1984)
+    <doi:10.1080/00224065.1984.11978921>.
+Depends:
+    R (>= 3.1.0)
+Imports:
+    backports,
+    ggplot2,
+    dplyr (>= 0.7.0)
+Suggests:
+    covr (>= 3.0.1),
+    testthat (>= 1.0.2)
+URL: https://github.com/msberends/nelson
+BugReports: https://github.com/msberends/nelson/issues
+License: GPL-2 | file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.0
